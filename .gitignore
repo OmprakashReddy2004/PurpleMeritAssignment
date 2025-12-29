@@ -1,0 +1,33 @@
+# =====================
+# Environment variables
+# =====================
+.env
+.env.*
+backend/.env
+frontend/.env
+
+# =====================
+# Python / Django
+# =====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+backend/venv/
+backend/.venv/
+
+# =====================
+# Node / React / Vite
+# =====================
+node_modules/
+frontend/node_modules/
+
+# =====================
+# OS / Editor junk
+# =====================
+.DS_Store
+.idea/
+.vscode/
