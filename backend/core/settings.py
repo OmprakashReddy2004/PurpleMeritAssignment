@@ -54,14 +54,17 @@ MIDDLEWARE = [
 # CORS
 # -------------------------------------------------
 
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # local frontend
+    "http://localhost:5173",
+    "https://purple-merit-assignment-black.vercel.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "https://purple-merit-assignment-black.vercel.app",
 ]
-CORS_ALLOW_CREDENTIALS = True
 
 # -------------------------------------------------
 # URLs & WSGI
