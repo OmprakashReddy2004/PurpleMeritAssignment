@@ -2,28 +2,18 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 # -------------------------------------------------
 # Base
 # -------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-# -------------------------------------------------
-# Security
-# -------------------------------------------------
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-secret-key")
-
 DEBUG = os.getenv("DEBUG", "False") == "True"
-
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    ".onrender.com",
-    ".railway.app",
-]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com", ".railway.app"]
 
 # -------------------------------------------------
 # Applications
@@ -37,11 +27,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework_simplejwt.token_blacklist",
+
     # Third-party
     "rest_framework",
     "corsheaders",
 
-    # Local
+    # Local apps
     "users",
 ]
 
@@ -62,11 +53,10 @@ MIDDLEWARE = [
 # -------------------------------------------------
 # CORS
 # -------------------------------------------------
- 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React/Vue default
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:5173",  # Vite default
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -93,37 +83,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
+import os
+
 # -------------------------------------------------
-# Database (PostgreSQL)
+# Database (Supabase PostgreSQL)
 # -------------------------------------------------
+import dj_database_url
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-    }
+    "default": dj_database_url.config(
+        default=os.getenv("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True,
+    )
 }
+
 
 # -------------------------------------------------
 # Password validation
 # -------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # -------------------------------------------------
@@ -143,26 +126,20 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
-    "DEFAULT_RENDERER_CLASSES": (
-        "rest_framework.renderers.JSONRenderer",
-    ),
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
 }
 
 # -------------------------------------------------
 # JWT Settings
 # -------------------------------------------------
-from rest_framework_simplejwt.settings import api_settings
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
-
     "ALGORITHM": "HS256",
     "SIGNING_KEY": os.getenv("JWT_SECRET", SECRET_KEY),
-
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
 }
@@ -171,9 +148,7 @@ SIMPLE_JWT = {
 # Localization
 # -------------------------------------------------
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
 USE_TZ = True
 
@@ -183,37 +158,18 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# -------------------------------------------------
-# Default primary key
-# -------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # -------------------------------------------------
-# Logging (clean error debugging)
+# Logging
 # -------------------------------------------------
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
-        "django.request": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "rest_framework": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-        },
+        "django.request": {"handlers": ["console"], "level": "DEBUG", "propagate": True},
+        "rest_framework": {"handlers": ["console"], "level": "DEBUG"},
     },
 }
-
-
