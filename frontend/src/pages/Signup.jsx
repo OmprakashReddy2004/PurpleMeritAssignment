@@ -71,26 +71,42 @@ export default function Signup() {
       setToast({ type: "success", message: "Account created. Please login." });
       setTimeout(() => navigate("/login"), 700);
     } catch (err) {
-      const data = err?.response?.data;
-      const msg =
-        data?.error ||
-        data?.detail ||
-        "Signup failed";
+  const data = err?.response?.data;
+  let msg = "Signup failed";
 
-      setToast({ type: "error", message: msg });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (data?.error?.email) {
+    // If backend returns the "email exists" error
+    msg = "User already exists, please login";
+  } else if (data?.error) {
+    // Any other error under "error" key
+    msg = Array.isArray(data.error) ? data.error.join(", ") : data.error;
+  } else if (data?.detail) {
+    // DRF default errors
+    msg = data.detail;
+  }
+
+  setToast({ type: "error", message: msg });
+}
+
+    finally {
+          setLoading(false);
+        }
+      };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <Toast toast={toast} onClose={() => setToast(null)} />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4">
+    
+    {/* APP TITLE */}
+    <h1 className="mb-8 text-3xl font-bold text-white text-center">
+      Mini User Management System
+    </h1>
 
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm rounded-xl border border-slate-800 bg-slate-900 p-8 shadow-lg"
-      >
+    <Toast toast={toast} onClose={() => setToast(null)} />
+
+    <form
+      onSubmit={submit}
+      className="w-full max-w-sm rounded-xl border border-slate-800 bg-slate-900 p-8 shadow-lg"
+    >
         <h1 className="text-2xl font-semibold text-white">Create account</h1>
         <p className="text-sm text-slate-400 mt-1">
           Get started in less than a minute.
