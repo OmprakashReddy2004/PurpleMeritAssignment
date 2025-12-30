@@ -1,9 +1,26 @@
 import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import Toast from "../components/Toast";
+
+/* ---------- Password strength logic ---------- */
+function getPasswordStrength(pw) {
+  if (!pw) return { label: "", score: 0 };
+
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  if (pw.length >= 8 && score >= 4)
+    return { label: "Strong", score: 3 };
+  if (score >= 2)
+    return { label: "Medium", score: 2 };
+  return { label: "Weak", score: 1 };
+}
 
 export default function Profile() {
   const { user, loadMe, logout } = useAuth();
@@ -22,6 +39,11 @@ export default function Profile() {
   const [showOldPw, setShowOldPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  const newPwStrength = useMemo(
+    () => getPasswordStrength(newPw),
+    [newPw]
+  );
 
   useEffect(() => {
     if (user) {
@@ -78,8 +100,24 @@ export default function Profile() {
       return;
     }
 
+    if (oldPw === newPw) {
+      setToast({
+        type: "error",
+        message: "New password cannot be the same as current password.",
+      });
+      return;
+    }
+
     if (newPw !== confirmNewPw) {
       setToast({ type: "error", message: "New passwords do not match." });
+      return;
+    }
+
+    if (newPwStrength.label !== "Strong") {
+      setToast({
+        type: "error",
+        message: "Password must be strong to continue.",
+      });
       return;
     }
 
@@ -121,10 +159,6 @@ export default function Profile() {
       >
         Logout
       </button>
-
-      {/* Glow blobs */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse delay-200" />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 
@@ -181,28 +215,94 @@ export default function Profile() {
           </h2>
 
           <div className="grid gap-4">
-            {[
-              ["Old password", oldPw, setOldPw, showOldPw, setShowOldPw],
-              ["New password", newPw, setNewPw, showNewPw, setShowNewPw],
-              ["Confirm new password", confirmNewPw, setConfirmNewPw, showConfirmPw, setShowConfirmPw],
-            ].map(([label, value, setter, show, toggle], i) => (
-              <div key={i} className="relative">
-                <label className="text-sm text-gray-300">{label}</label>
-                <input
-                  type={show ? "text" : "password"}
-                  value={value}
-                  onChange={(e) => setter(e.target.value)}
-                  className="mt-1 w-full rounded-lg bg-transparent border border-white/20 px-3 py-2 text-white"
-                />
-                <button
-                  type="button"
-                  onClick={() => toggle(!show)}
-                  className="absolute right-3 top-9 text-gray-400"
-                >
-                  {show ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            ))}
+            {/* Old Password */}
+            <div className="relative">
+              <label className="text-sm text-gray-300">Old password</label>
+              <input
+                type={showOldPw ? "text" : "password"}
+                value={oldPw}
+                onChange={(e) => setOldPw(e.target.value)}
+                className="mt-1 w-full rounded-lg bg-transparent border border-white/20 px-3 py-2 text-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOldPw(!showOldPw)}
+                className="absolute right-3 top-9 text-gray-400"
+              >
+                {showOldPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {/* New Password */}
+            <div className="relative">
+              <label className="text-sm text-gray-300">New password</label>
+              <input
+                type={showNewPw ? "text" : "password"}
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                className="mt-1 w-full rounded-lg bg-transparent border border-white/20 px-3 py-2 text-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPw(!showNewPw)}
+                className="absolute right-3 top-9 text-gray-400"
+              >
+                {showNewPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+
+              {/* Strength bar */}
+              {newPw && (
+                <div className="mt-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded ${
+                          newPwStrength.score >= i
+                            ? newPwStrength.label === "Strong"
+                              ? "bg-green-500"
+                              : newPwStrength.label === "Medium"
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                            : "bg-white/20"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p
+                    className={`mt-1 text-xs ${
+                      newPwStrength.label === "Strong"
+                        ? "text-green-400"
+                        : newPwStrength.label === "Medium"
+                        ? "text-yellow-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    Password strength: {newPwStrength.label}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className="relative">
+              <label className="text-sm text-gray-300">
+                Confirm new password
+              </label>
+              <input
+                type={showConfirmPw ? "text" : "password"}
+                value={confirmNewPw}
+                onChange={(e) => setConfirmNewPw(e.target.value)}
+                className="mt-1 w-full rounded-lg bg-transparent border border-white/20 px-3 py-2 text-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPw(!showConfirmPw)}
+                className="absolute right-3 top-9 text-gray-400"
+              >
+                {showConfirmPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
 
             <button
               onClick={changePassword}
